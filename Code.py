@@ -27,10 +27,10 @@ def encode_image(image_path):
 
 
 # Создание клиента Telegram для управления ботом
-bot = telebot.TeleBot("6867928199:AAHCwuvyFdWazmVhkb0DNVQrr19X5XYwv08", parse_mode="MarkdownV2")
+bot = telebot.TeleBot("API_KEY", parse_mode="MarkdownV2")
 
 # Срздание клиента OpenAI для доступа к модели ИИ
-api_key = "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"
+api_key = "API_KEY"
 client = OpenAI(api_key=api_key)
 
 # Создание словаря, состоящего из ID пользователей и их диалогов с ботом

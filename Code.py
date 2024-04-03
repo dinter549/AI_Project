@@ -27,10 +27,10 @@ def encode_image(image_path):
 
 
 # Создание клиента Telegram для управления ботом
-bot = telebot.TeleBot("6867928199:AAHCwuvyFdWazmVhkb0DNVQrr19X5XYwv08", parse_mode="MarkdownV2")
+bot = telebot.TeleBot("api_key", parse_mode="MarkdownV2")
 
 # Создание клиента OpenAI для доступа к модели ИИ
-api_key = "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"
+api_key = "api_key"
 client = OpenAI(api_key=api_key)
 
 cyrillic_to_latin = {

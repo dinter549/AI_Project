@@ -27,11 +27,28 @@ def encode_image(image_path):
 
 
 # Создание клиента Telegram для управления ботом
-bot = telebot.TeleBot("API_KEY", parse_mode="MarkdownV2")
+bot = telebot.TeleBot("6867928199:AAHCwuvyFdWazmVhkb0DNVQrr19X5XYwv08", parse_mode="MarkdownV2")
 
-# Срздание клиента OpenAI для доступа к модели ИИ
-api_key = "API_KEY"
+# Создание клиента OpenAI для доступа к модели ИИ
+api_key = "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"
 client = OpenAI(api_key=api_key)
+
+cyrillic_to_latin = {
+        'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D',
+        'Е': 'E', 'Ё': 'E', 'Ж': 'Zh', 'З': 'Z', 'И': 'I',
+        'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M', 'Н': 'N',
+        'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T',
+        'У': 'U', 'Ф': 'F', 'Х': 'H', 'Ц': 'Ts', 'Ч': 'Ch',
+        'Ш': 'Sh', 'Щ': 'Sch', 'Ъ': '', 'Ы': 'Y', 'Ь': '',
+        'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya',
+        'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd',
+        'е': 'e', 'ё': 'e', 'ж': 'zh', 'з': 'z', 'и': 'i',
+        'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n',
+        'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't',
+        'у': 'u', 'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch',
+        'ш': 'sh', 'щ': 'sch', 'ъ': '', 'ы': 'y', 'ь': '',
+        'э': 'e', 'ю': 'yu', 'я': 'ya'
+    }
 
 # Создание словаря, состоящего из ID пользователей и их диалогов с ботом
 dialogs = {}
@@ -91,32 +108,34 @@ def echo_all(message):
     obr = 0
     starts = [0]
     for i in range(len(response1) - 1):
-        if response1[i] + response1[i + 1] == "\[" or response1[i] + response1[i + 1] == "\(":
+        if response1[i] + response1[i + 1] == "\[":
             formula = "\["
             for j in range(i + 2, len(response1)):
                 formula += response1[j]
-                if formula[-2] + formula[-1] == "\]" or formula[-2] + formula[-1] == "\)":
+                if formula[-2] + formula[-1] == "\]":
                     obr = j
                     starts.append(j + 1)
                     break
-            if len(formula.replace("\(", "").replace("\)", "").replace("\[", "").replace("\]", "")) == 1:
-                continue
             piece = ""
             for x in range(starts[-2], i):
                 piece += response1[x]
             if piece.replace("\n", "").replace(" ", "") != "":
                 bot.send_message(message.from_user.id, format_message(piece))
-            preview(r'$$' + formula[2:][:-2] + '$$', viewer='file',
-                    filename='formula.png',
-                    euler=False,
-                    dvioptions=["-D", "600"])
-            with open('formula.png', 'rb') as photo:
-                bot.send_photo(message.from_user.id, photo)
+            try:
+                for d in cyrillic_to_latin:
+                    formula = formula.replace(d, cyrillic_to_latin[d])
+                preview(r'$$' + formula[2:][:-2] + '$$', viewer='file',
+                        filename='formula.png',
+                        euler=False,
+                        dvioptions=["-D", "600"])
+                with open('formula.png', 'rb') as photo:
+                    bot.send_photo(message.from_user.id, photo)
+            except:
+                bot.send_message(message.from_user.id, format_message(formula))
     if obr == 0:
         response = format_message(response1)
     else:
         response = format_message(response1[obr + 1:])
-    print(response)
     bot.send_message(message.from_user.id, response)
     # Добавление ответа ИИ в диалог
     dialogs[message.from_user.id].append({"role": "assistant", "content": response1})
@@ -159,14 +178,14 @@ def handle_photo(message):
             }}]})
     else:
         if message.caption is not None:
-            dialogs[message.from_user.id] = {"role": "user", "content": [{"type": "text", "text": message.caption},
-                                                                         {"type": "image_url", "image_url": {
-                                                                             "url": f"data:image/jpeg;base64,{base64_image}"
-                                                                         }}]}
+            dialogs[message.from_user.id] = [{"role": "user", "content": [{"type": "text", "text": message.caption},
+                                                                          {"type": "image_url", "image_url": {
+                                                                              "url": f"data:image/jpeg;base64,{base64_image}"
+                                                                          }}]}]
         else:
-            dialogs[message.from_user.id] = {"role": "user", "content": [{"type": "image_url", "image_url": {
+            dialogs[message.from_user.id] = [{"role": "user", "content": [{"type": "image_url", "image_url": {
                 "url": f"data:image/jpeg;base64,{base64_image}"
-            }}]}
+            }}]}]
     payload = {
         "model": "gpt-4-vision-preview",
         "messages": dialogs[message.from_user.id],
@@ -182,32 +201,34 @@ def handle_photo(message):
     obr = 0
     starts = [0]
     for i in range(len(response1) - 1):
-        if response1[i] + response1[i + 1] == "\[" or response1[i] + response1[i + 1] == "\(":
+        if response1[i] + response1[i + 1] == "\[":
             formula = "\["
             for j in range(i + 2, len(response1)):
                 formula += response1[j]
-                if formula[-2] + formula[-1] == "\]" or formula[-2] + formula[-1] == "\)":
+                if formula[-2] + formula[-1] == "\]":
                     obr = j
                     starts.append(j + 1)
                     break
-            if len(formula.replace("\(", "").replace("\)", "").replace("\[", "").replace("\]", "")) == 1:
-                continue
             piece = ""
             for x in range(starts[-2], i):
                 piece += response1[x]
             if piece.replace("\n", "").replace(" ", "") != "":
                 bot.send_message(message.from_user.id, format_message(piece))
-            preview(r'$$' + formula[2:][:-2] + '$$', viewer='file',
-                    filename='formula.png',
-                    euler=False,
-                    dvioptions=["-D", "600"])
-            with open('formula.png', 'rb') as photo:
-                bot.send_photo(message.from_user.id, photo)
+            try:
+                for d in cyrillic_to_latin:
+                    formula = formula.replace(d, cyrillic_to_latin[d])
+                preview(r'$$' + formula[2:][:-2] + '$$', viewer='file',
+                        filename='formula.png',
+                        euler=False,
+                        dvioptions=["-D", "600"])
+                with open('formula.png', 'rb') as photo:
+                    bot.send_photo(message.from_user.id, photo)
+            except:
+                bot.send_message(message.from_user.id, format_message(formula))
     if obr == 0:
         response = format_message(response1)
     else:
         response = format_message(response1[obr + 1:])
-    print(response)
     # Отправка ответа ИИ пользователю
     bot.send_message(message.from_user.id, response)
     # Добавление ответа ИИ в диалог
